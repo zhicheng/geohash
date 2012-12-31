@@ -5,6 +5,7 @@
 
 #include "geohash.h"
 
+/* BASE 32 encode table */
 static char base32en[] = {
 	'0', '1', '2', '3', '4', '5', '6', '7',
 	'8', '9', 'b', 'c', 'd', 'e', 'f', 'g',
@@ -12,6 +13,7 @@ static char base32en[] = {
 	's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
 };
 
+/* ASCII order for BASE 32,ignore useless character */
 static char base32de[] = {
 	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -69,39 +71,39 @@ geohash_encode(double latitude, double longitude, char *hash, size_t len)
 
 	char mask[] = {16, 8, 4, 2, 1};
 
-	int i = 0;
-	int n = 0;
-	int idx = 0;
-	int even = 0;
+	int i, n;
+	int idx;
 
+	int even = 0;
 	int right;
 
 	precision = fmin(fprec(latitude), fprec(longitude));
 	precision = fmax(PRECISION, precision);
 
+	/* save the last space for '\0' when len is not enough */
 	len -= 1;
-	while (i < len) {
-		if ((lat[1] - lat[0]) < precision && (lon[1] - lon[0]) < precision)
+	for (i = 0; i < len; i++) {
+		/* break when precision is enough for input latitude/longitude */
+		if ((lat[1] - lat[0]) / 2.0 < precision && 
+		    (lon[1] - lon[0]) / 2.0 < precision)
 			break;
-			
-		if ((even = !even)) {
-			mid = (lon[0] + lon[1]) / 2.0;
-			right = (longitude > mid);
-			if (right)
-				idx |= mask[n];
-			lon[!right] = mid;
-		} else {
-			mid = (lat[0] + lat[1]) / 2.0;
-			right = (latitude > mid);
-			if (right)
-				idx |= mask[n];
-			lat[!right] = mid;
-		}
 
-		if (n++ >= 4) {
-			hash[i++] = base32en[idx];
-			idx = n = 0;
+		for (n = idx = 0; n <= 4; n++) {
+			if ((even = !even)) {
+				mid = (lon[0] + lon[1]) / 2.0;
+				right = (longitude > mid);
+				if (right)
+					idx |= mask[n];
+				lon[!right] = mid;
+			} else {
+				mid = (lat[0] + lat[1]) / 2.0;
+				right = (latitude > mid);
+				if (right)
+					idx |= mask[n];
+				lat[!right] = mid;
+			}
 		}
+		hash[i] = base32en[idx];
 	}
 	hash[i] = 0;
 }
@@ -119,27 +121,25 @@ geohash_decode(char *hash, double *latitude, double *longitude)
 
 	char mask[] = {16, 8, 4, 2, 1};
 
-	int i = 0;
-	int n = 0;
+	int i, n;
 	int idx = 0;
+
 	int even = 0;
 
 	int right;
 
-	while (i < len) {
+	for (i = 0; i < len; i++) {
 		idx = base32de[hash[i] - '0'];
-		if ((even = !even)) {
-			mid = (lon[0] + lon[1]) / 2.0;
-			right = (idx & mask[n]);
-			lon[!right] = mid;
-		} else {
-			mid = (lat[0] + lat[1]) / 2.0;
-			right = (idx & mask[n]);
-			lat[!right] = mid;
-		}
-		if (n++ >= 4) {
-			i++;
-			idx = n = 0;
+		for (n = 0; n <= 4; n++) {
+			if ((even = !even)) {
+				mid = (lon[0] + lon[1]) / 2.0;
+				right = (idx & mask[n]);
+				lon[!right] = mid;
+			} else {
+				mid = (lat[0] + lat[1]) / 2.0;
+				right = (idx & mask[n]);
+				lat[!right] = mid;
+			}
 		}
 	}
 	lat_err = (lat[1] - lat[0]) / 2.0;
