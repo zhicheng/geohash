@@ -60,7 +60,7 @@ fprec(double x)
 	return pow(10, -i);
 }
 
-void 
+int
 geohash_encode(double latitude, double longitude, char *hash, size_t len)
 {
 	double lat[] = {-90.0, 90.0};
@@ -76,6 +76,11 @@ geohash_encode(double latitude, double longitude, char *hash, size_t len)
 
 	int even = 0;
 	int right;
+
+	/* check input latitude/longitude is ok or invalid */
+	if (latitude < lat[0] || latitude > lat[1] ||
+	    longitude < lon[0] || longitude > lon[1])
+		return GEOHASH_INVALID;
 
 	precision = fmin(fprec(latitude), fprec(longitude));
 	precision = fmax(PRECISION, precision);
@@ -106,9 +111,10 @@ geohash_encode(double latitude, double longitude, char *hash, size_t len)
 		hash[i] = base32en[idx];
 	}
 	hash[i] = 0;
+	return GEOHASH_OK;
 }
 
-void
+int
 geohash_decode(char *hash, double *latitude, double *longitude)
 {
 	size_t len = strlen(hash);
@@ -129,7 +135,10 @@ geohash_decode(char *hash, double *latitude, double *longitude)
 	int right;
 
 	for (i = 0; i < len; i++) {
-		idx = base32de[hash[i] - '0'];
+		if (hash[i] < '0' || hash[i] > 'z' ||
+		    (idx = base32de[hash[i] - '0']) == -1)
+			return GEOHASH_INVALID;
+
 		for (n = 0; n <= 4; n++) {
 			if ((even = !even)) {
 				mid = (lon[0] + lon[1]) / 2.0;
@@ -149,5 +158,7 @@ geohash_decode(char *hash, double *latitude, double *longitude)
 	lon_err = (lon[1] - lon[0]) / 2.0;
 	*longitude = pround((lon[0] + lon[1]) / 2.0, 
 			max(1, (int)round(-log10(lon_err))) - 1);
+
+	return GEOHASH_OK;
 }
 

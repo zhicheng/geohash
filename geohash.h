@@ -4,10 +4,12 @@
 
 #include <stdlib.h>
 
-void
+enum {GEOHASH_OK = 0, GEOHASH_INVALID};
+
+int
 geohash_encode(double latitude, double longitude, char *hash, size_t len);
 
-void
+int
 geohash_decode(char *hash, double *latitude, double *longitude);
 
 #endif /* __GEOHASH_H__ */
