@@ -1,4 +1,5 @@
-/* This is a public domain geohash implement write by WEI Zhicheng */
+/* This is a public domain geohash implementation written by WEI Zhicheng. */
+
 #include <math.h>
 #include <float.h>
 #include <string.h>

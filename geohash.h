@@ -1,4 +1,5 @@
-/* This is a public domain geohash implement write by WEI Zhicheng */
+/* This is a public domain geohash implementation written by WEI Zhicheng. */
+
 #ifndef __GEOHASH_H__
 #define __GEOHASH_H__
 
