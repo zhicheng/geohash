@@ -14,6 +14,8 @@ static char base32en[] = {
 	's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
 };
 
+#define BASE32DE_FIRST	'0'
+#define BASE32DE_LAST	'z'
 /* ASCII order for BASE 32 decode,from '0' to 'z', -1 in unused character */
 static signed char base32de[] = {
 	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 
@@ -136,8 +138,8 @@ geohash_decode(char *hash, double *latitude, double *longitude)
 	int right;
 
 	for (i = 0; i < len; i++) {
-		if (hash[i] < '0' || hash[i] > 'z' ||
-		    (idx = base32de[hash[i] - '0']) == -1)
+		if (hash[i] < BASE32DE_FIRST || hash[i] > BASE32DE_LAST ||
+		    (idx = base32de[hash[i] - BASE32DE_FIRST]) == -1)
 			return GEOHASH_INVALID;
 
 		for (n = 0; n <= 4; n++) {
